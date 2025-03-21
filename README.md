@@ -64,7 +64,7 @@
 ## 👥 Contributors
 - **Rishabh Tanwar** – ML Development
 - **Ananya Gaur** – ML Development
-- **Parth Deshpande** – UI/UX & Backend Integration
+- **Parth Deshpande** – Backend Integration
 - **Pratyush Dubey** – Backend Integration
 - **Bhawna Chauraisa** – UI/UX & Development  
 - **Mansi Kushwaha** – UI/UX & Development  
