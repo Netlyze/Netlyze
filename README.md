@@ -77,4 +77,4 @@ This project is licensed under the **MIT License** – see the [LICENSE](LICENSE
 ---
 
 ## ⭐ Show Your Support
-If you like **Netlze**, give us a ⭐ on GitHub and contribute to its future development!
+If you like **Netlyze**, give us a ⭐ on GitHub and contribute to its future development!
