@@ -1,0 +1,31 @@
+2025-04-03 23:11:23 | Website Accessed: mobile.events.data.microsoft.com. | Source: 172.25.231.6 | Destination: 172.25.20.5 | Protocol: UDP | Size: 92 bytes
+2025-04-03 23:11:23 | Website Accessed: mobile.events.data.microsoft.com. | Source: 172.25.20.5 | Destination: 172.25.231.6 | Protocol: UDP | Size: 212 bytes
+2025-04-03 23:11:23 | Website: 52.168.117.175 | Source: 172.25.231.6 | Destination: 52.168.117.175 | Protocol: TCP | Size: 66 bytes
+2025-04-03 23:11:28 | Website Accessed: 5.20.25.172.in-addr.arpa. | Source: 172.25.231.6 | Destination: 172.25.20.5 | Protocol: UDP | Size: 84 bytes
+2025-04-03 23:11:28 | Website Accessed: 5.20.25.172.in-addr.arpa. | Source: 172.25.20.5 | Destination: 172.25.231.6 | Protocol: UDP | Size: 106 bytes
+2025-04-03 23:11:28 | Website Accessed: 175.117.168.52.in-addr.arpa. | Source: 172.25.231.6 | Destination: 172.25.20.5 | Protocol: UDP | Size: 87 bytes
+2025-04-03 23:11:28 | Website Accessed: 175.117.168.52.in-addr.arpa. | Source: 172.25.20.5 | Destination: 172.25.231.6 | Protocol: UDP | Size: 161 bytes
+2025-04-03 23:11:28 | Website: 52.168.117.175 | Source: 172.25.231.6 | Destination: 52.168.117.175 | Protocol: UDP | Size: 92 bytes
+2025-04-03 23:11:32 | Website: Asus.vitbcdns | Source: 52.168.117.175 | Destination: 172.25.231.6 | Protocol: TCP | Size: 66 bytes
+2025-04-03 23:11:32 | Website: 52.168.117.175 | Source: 172.25.231.6 | Destination: 52.168.117.175 | Protocol: TCP | Size: 54 bytes
+2025-04-03 23:11:37 | Website: 52.168.117.175 | Source: 172.25.231.6 | Destination: 52.168.117.175 | Protocol: TCP | Size: 571 bytes
+2025-04-03 23:11:41 | Website: 233.76.201.35.bc.googleusercontent.com | Source: 172.25.231.6 | Destination: 35.201.76.233 | Protocol: TCP | Size: 55 bytes
+2025-04-03 23:11:41 | Website: Asus.vitbcdns | Source: 52.168.117.175 | Destination: 172.25.231.6 | Protocol: TCP | Size: 54 bytes
+2025-04-03 23:11:41 | Website: Asus.vitbcdns | Source: 35.201.76.233 | Destination: 172.25.231.6 | Protocol: TCP | Size: 66 bytes
+2025-04-03 23:11:41 | Website: Asus.vitbcdns | Source: 52.168.117.175 | Destination: 172.25.231.6 | Protocol: TCP | Size: 153 bytes
+2025-04-03 23:11:41 | Website: 52.168.117.175 | Source: 172.25.231.6 | Destination: 52.168.117.175 | Protocol: TCP | Size: 491 bytes
+2025-04-03 23:11:46 | Website: Asus.vitbcdns | Source: 52.168.117.175 | Destination: 172.25.231.6 | Protocol: TCP | Size: 1514 bytes
+2025-04-03 23:11:46 | Website: Asus.vitbcdns | Source: 52.168.117.175 | Destination: 172.25.231.6 | Protocol: TCP | Size: 2974 bytes
+2025-04-03 23:11:46 | Website: 52.168.117.175 | Source: 172.25.231.6 | Destination: 52.168.117.175 | Protocol: TCP | Size: 54 bytes
+2025-04-03 23:11:50 | Website: Asus.vitbcdns | Source: 52.168.117.175 | Destination: 172.25.231.6 | Protocol: TCP | Size: 209 bytes
+2025-04-03 23:11:50 | Website: 52.168.117.175 | Source: 172.25.231.6 | Destination: 52.168.117.175 | Protocol: TCP | Size: 54 bytes
+2025-04-03 23:11:55 | Website: 52.168.117.175 | Source: 172.25.231.6 | Destination: 52.168.117.175 | Protocol: TCP | Size: 1494 bytes
+2025-04-03 23:11:59 | Website: 52.168.117.175 | Source: 172.25.231.6 | Destination: 52.168.117.175 | Protocol: TCP | Size: 669 bytes
+2025-04-03 23:12:04 | Website: 52.168.117.175 | Source: 172.25.231.6 | Destination: 52.168.117.175 | Protocol: UDP | Size: 92 bytes
+2025-04-03 23:12:08 | Website: Asus.vitbcdns | Source: 52.168.117.175 | Destination: 172.25.231.6 | Protocol: TCP | Size: 54 bytes
+2025-04-03 23:12:08 | Website: Asus.vitbcdns | Source: 52.168.117.175 | Destination: 172.25.231.6 | Protocol: TCP | Size: 157 bytes
+2025-04-03 23:12:08 | Website: Asus.vitbcdns | Source: 52.168.117.175 | Destination: 172.25.231.6 | Protocol: TCP | Size: 518 bytes
+2025-04-03 23:12:08 | Website: 52.168.117.175 | Source: 172.25.231.6 | Destination: 52.168.117.175 | Protocol: TCP | Size: 54 bytes
+2025-04-03 23:12:13 | Website: 52.168.117.175 | Source: 172.25.231.6 | Destination: 52.168.117.175 | Protocol: TCP | Size: 78 bytes
+2025-04-03 23:12:17 | Website: 52.168.117.175 | Source: 172.25.231.6 | Destination: 52.168.117.175 | Protocol: TCP | Size: 54 bytes
+2025-04-03 23:12:22 | Website: Asus.vitbcdns | Source: 52.168.117.175 | Destination: 172.25.231.6 | Protocol: TCP | Size: 54 bytes
