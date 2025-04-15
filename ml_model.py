@@ -1,110 +1,227 @@
 import numpy as np
-from collections import Counter
+import time
+import pickle
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score
+from tqdm import tqdm  # For progress bars
 
+def serialize_tree(tree):
+    if not isinstance(tree, tuple):
+        return {"leaf": tree}
+    split_idx, split_val, left, right = tree
+    return {
+        "split_idx": split_idx,
+        "split_val": split_val,
+        "left": serialize_tree(left),
+        "right": serialize_tree(right)
+    }
 
+def save_model(model, path):
+    forest = {
+        "rf_trees": [serialize_tree(tree.tree) for tree in model.rf_trees],
+        "gb_trees": [serialize_tree(tree.tree) for tree in model.gb_trees],
+        "learning_rate": model.learning_rate
+    }
+    with open(path, "w") as f:
+        json.dump(forest, f)
+
+# Decision Tree implementation
 class DecisionTree:
-    def __init__(self, max_depth=10, min_samples_split=2):
+    def __init__(self, max_depth=3):
         self.max_depth = max_depth
-        self.min_samples_split = min_samples_split
         self.tree = None
 
     def fit(self, X, y):
-        self.tree = self._grow_tree(X, y, depth=0)
+        self.tree = self._build_tree(X, y, depth=0)
 
     def predict(self, X):
-        return np.array([self._traverse_tree(x, self.tree) for x in X])
+        return np.array([self._predict_input(x, self.tree) for x in X])
 
-    def _grow_tree(self, X, y, depth):
-        if len(set(y)) == 1 or depth >= self.max_depth or len(y) < self.min_samples_split:
-            return Counter(y).most_common(1)[0][0]
+    def _gini(self, y):
+        if y.ndim > 1 and y.shape[1] > 1:
+            y = np.argmax(y, axis=1)
+        classes, counts = np.unique(y, return_counts=True)
+        probs = counts / counts.sum()
+        return 1 - np.sum(probs ** 2)
+    def _best_split(self, X, y, num_thresholds=20):
+        start_time = time.time()
+        m, n = X.shape
+        if m <= 1:
+            return None, None
 
-        feature, threshold = self._best_split(X, y)
-        if feature is None:
-            return Counter(y).most_common(1)[0][0]
+        parent_gini = self._gini(y)
+        best_gain = 0
+        best_feature = None
+        best_threshold = None
 
-        left_idx, right_idx = X[:, feature] < threshold, X[:, feature] >= threshold
-        left_subtree = self._grow_tree(X[left_idx], y[left_idx], depth + 1)
-        right_subtree = self._grow_tree(X[right_idx], y[right_idx], depth + 1)
-        return (feature, threshold, left_subtree, right_subtree)
+        for feature_index in range(n):
+            X_column = X[:, feature_index]
+            thresholds = np.unique(X_column)
+            if len(thresholds) > num_thresholds:
+                thresholds = np.percentile(X_column, np.linspace(0, 100, num_thresholds))
 
-    def _best_split(self, X, y):
-        best_mse, best_feature, best_threshold = float("inf"), None, None
-        for feature in range(X.shape[1]):
-            thresholds = np.unique(X[:, feature])
             for threshold in thresholds:
-                left_idx, right_idx = X[:, feature] < threshold, X[:, feature] >= threshold
-                if sum(left_idx) == 0 or sum(right_idx) == 0:
+                left_mask = X_column <= threshold
+                right_mask = ~left_mask
+
+                if np.sum(left_mask) == 0 or np.sum(right_mask) == 0:
                     continue
-                mse = self._mse(y[left_idx]) * sum(left_idx) + self._mse(y[right_idx]) * sum(right_idx)
-                if mse < best_mse:
-                    best_mse, best_feature, best_threshold = mse, feature, threshold
+
+                y_left, y_right = y[left_mask], y[right_mask]
+                gini_left = self._gini(y_left)
+                gini_right = self._gini(y_right)
+
+                weighted_gini = (len(y_left) / m) * gini_left + (len(y_right) / m) * gini_right
+                gain = parent_gini - weighted_gini
+
+                if gain > best_gain:
+                    best_gain = gain
+                    best_feature = feature_index
+                    best_threshold = threshold
+        #print(f"Best split computed in {time.time() - start_time:.2f} sec")
         return best_feature, best_threshold
 
-    def _mse(self, y):
-        return np.mean((y - np.mean(y)) ** 2) if len(y) > 0 else float("inf")
+    def _build_tree(self, X, y, depth):
+        if depth >= self.max_depth or len(set(y)) == 1:
+            return np.mean(y)
 
-    def _traverse_tree(self, x, node):
-        if not isinstance(node, tuple):
-            return node
-        feature, threshold, left, right = node
-        return self._traverse_tree(x, left if x[feature] < threshold else right)
+        split_idx, split_val = self._best_split(X, y)
+        if split_idx is None:
+            return np.mean(y)
+
+        left_mask = X[:, split_idx] < split_val
+        right_mask = ~left_mask
+
+        left_subtree = self._build_tree(X[left_mask], y[left_mask], depth + 1)
+        right_subtree = self._build_tree(X[right_mask], y[right_mask], depth + 1)
+
+        return (split_idx, split_val, left_subtree, right_subtree)
+
+    def _predict_input(self, x, tree):
+        if not isinstance(tree, tuple):
+            return tree
+        feature, threshold, left, right = tree
+        if x[feature] < threshold:
+            return self._predict_input(x, left)
+        else:
+            return self._predict_input(x, right)
 
 
-class RandomForest:
-    def __init__(self, n_trees=10, max_depth=10, min_samples_split=2):
-        self.n_trees = n_trees
-        self.trees = [DecisionTree(max_depth, min_samples_split) for _ in range(n_trees)]
+# HybridEnsemble model with progress bars, epochs, and MSE tracking
+class HybridEnsemble:
+    def __init__(self, n_rf=5, n_gb=5, learning_rate=0.1, max_depth=3):
+        self.n_rf = n_rf
+        self.n_gb = n_gb
+        self.learning_rate = learning_rate
+        self.max_depth = max_depth
+        self.rf_trees = []
+        self.gb_trees = []
 
-    def fit(self, X, y):
-        for tree in self.trees:
-            idxs = np.random.choice(len(X), len(X), replace=True)
-            tree.fit(X[idxs], y[idxs])
+    def fit(self, X, y, epochs=5, X_val=None, y_val=None):
+        m = X.shape[0]
+
+        for epoch in range(epochs):
+            print(f"\nEpoch {epoch+1}/{epochs}")
+
+            # Random Forest Phase
+            print("  Training Random Forest Trees:")
+            for _ in tqdm(range(self.n_rf)):
+                indices = np.random.choice(m, m, replace=True)
+                X_sample, y_sample = X[indices], y[indices]
+                tree = DecisionTree(max_depth=self.max_depth)
+                tree.fit(X_sample, y_sample)
+                self.rf_trees.append(tree)
+
+            pred = self._rf_predict(X)
+
+            # Gradient Boosting Phase
+            print("  Training Gradient Boosting Trees:")
+            for _ in tqdm(range(self.n_gb)):
+                residuals = y - pred
+                tree = DecisionTree(max_depth=self.max_depth)
+                tree.fit(X, residuals)
+                self.gb_trees.append(tree)
+                pred += self.learning_rate * tree.predict(X)
+
+            # Epoch-end MSE Logging
+            if X_val is not None and y_val is not None:
+                val_pred = self.predict(X_val)
+                val_mse = mean_squared_error(y_val, val_pred)
+                print(f"  Validation MSE after epoch {epoch+1}: {val_mse:.4f}")
 
     def predict(self, X):
-        return np.mean([tree.predict(X) for tree in self.trees], axis=0)
+        pred = self._rf_predict(X)
+        for tree in self.gb_trees:
+            pred += self.learning_rate * tree.predict(X)
+        return pred
+
+    def _rf_predict(self, X):
+        preds = np.array([tree.predict(X) for tree in self.rf_trees])
+        return np.mean(preds, axis=0)
 
 
+# MSE metric function
 def mean_squared_error(y_true, y_pred):
     return np.mean((y_true - y_pred) ** 2)
 
 
-class GradientBoosting:
-    def __init__(self, n_estimators=100, learning_rate=0.1, max_depth=3):
-        self.n_estimators = n_estimators
-        self.learning_rate = learning_rate
-        self.max_depth = max_depth
-        self.trees = []
+# === Data Preparation ===
 
-    def fit(self, X, y):
-        pred = np.full(y.shape, np.mean(y))
-        for _ in range(self.n_estimators):
-            residuals = y - pred
-            tree = DecisionTree(max_depth=self.max_depth)
-            tree.fit(X, residuals)
-            self.trees.append(tree)
-            pred += self.learning_rate * tree.predict(X)
+# Load features and labels
+features_act = pd.read_csv('/Users/r1shabh/dev/kitsune_dataset/Active_Wiretap/Active_Wiretap_dataset.csv', header=None)
+labels_act = pd.read_csv('/Users/r1shabh/dev/kitsune_dataset/Active_Wiretap/Active_Wiretap_labels.csv')
+features_mitm = pd.read_csv('/Users/r1shabh/dev/kitsune_dataset/ARP_MitM/ARP_MitM_dataset.csv', header=None)
+labels_mitm = pd.read_csv('/Users/r1shabh/dev/kitsune_dataset/ARP_MitM/ARP_MitM_labels.csv')
 
-    def predict(self, X):
-        pred = np.full((X.shape[0],), np.mean(y))
-        for tree in self.trees:
-            pred += self.learning_rate * tree.predict(X)
-        return pred
+print("features_act shape:", features_act.shape)
+print("labels_act shape:", labels_act.shape)
+assert len(features_act) == len(labels_act)
+print("features_mitm shape:", features_mitm.shape)
+print("labels_mitm shape:", labels_mitm.shape)
+assert len(features_mitm) == len(labels_mitm)
 
+# Selected feature indices
+selected_features_indices_act = [79,78,64,12,63,51,9,77,24,58,75,27,76,111,14,62,44,74,13,29]
+selected_features_indices_mitm = [79,78,108,27,77,58,12,63,64,76,75,59,61,56,62,13,28,60,109,14]
 
-class KNN:
-    def __init__(self, k=5):
-        self.k = k
+# Select features
+X_act_selected = features_act.iloc[:, selected_features_indices_act]
+X_mitm_selected = features_mitm.iloc[:, selected_features_indices_mitm]
 
-    def fit(self, X, y):
-        self.X_train = X
-        self.y_train = y
+# Labels
+y_act = labels_act.iloc[:, 1].values
+y_mitm = labels_mitm.iloc[:, 1].values
 
-    def predict(self, X):
-        predictions = [self._predict_single(x) for x in X]
-        return np.array(predictions)
+# Combine datasets
+X_selected = pd.concat([X_act_selected, X_mitm_selected], axis=0).values
+y = np.concatenate([y_act, y_mitm])
 
-    def _predict_single(self, x):
-        distances = np.sqrt(np.sum((self.X_train - x) ** 2, axis=1))
-        k_indices = np.argsort(distances)[:self.k]
-        return np.mean(self.y_train[k_indices])
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X_selected, y, test_size=0.2, random_state=42)
 
+# Scaling
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Train the model
+model = HybridEnsemble(n_rf=40, n_gb=40, learning_rate=0.01, max_depth=3)
+model.fit(X_train_scaled, y_train, epochs=6, X_val=X_test_scaled, y_val=y_test)
+
+# Final test MSE
+y_pred = model.predict(X_test_scaled)
+mse = mean_squared_error(y_test, y_pred)
+print("\nFinal Test Set MSE:", mse)
+
+save_model(model, "/Users/r1shabh/dev/kitsune_dataset/__pickle_model/hybrid_ensemble_model.json")
+
+with open("/Users/r1shabh/dev/kitsune_dataset/__pickle_model/hybrid_ensemble_model.pkl", "wb") as f:
+    pickle.dump(model, f)
+
+y_pred_labels = (y_pred >= 0.5).astype(int)
+y_test_labels = y_test.astype(int)
+
+accuracy = accuracy_score(y_test_labels, y_pred_labels)
+print(f"✅ Model Accuracy on Test Set: {accuracy * 100:.2f}%")
